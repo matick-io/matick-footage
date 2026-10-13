@@ -1,0 +1,14 @@
+# Dependencies and builds
+node_modules/
+web/dist/
+web/.matick
+*.tsbuildinfo
+__pycache__/
+*.egg-info/
+.venv/
+
+# Local footage, generated samples and app data
+dev/footage/
+dev/data/
+.env
+local.mk

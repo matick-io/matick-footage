@@ -1,0 +1,20 @@
+[project]
+name = "footage-worker"
+version = "0.1.0"
+description = "Media and ML ingest stages for matick-footage"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+dependencies = [
+  "psycopg[binary]>=3.2,<4",
+  "faster-whisper>=1.1,<2",
+]
+
+[project.scripts]
+footage-worker = "footage_worker.__main__:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["footage_worker"]

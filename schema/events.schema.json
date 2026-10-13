@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/matick-io/matick-footage/schema/events.schema.json",
+  "title": "matick-footage event sidecar, version 1",
+  "description": "One line of a <recording>.events.jsonl sidecar. The first line is a session; every later line is an event, span or marker. Within a major version, changes are additive only, so readers must ignore unknown fields.",
+  "oneOf": [
+    { "$ref": "#/$defs/session" },
+    { "$ref": "#/$defs/event" },
+    { "$ref": "#/$defs/span" },
+    { "$ref": "#/$defs/marker" }
+  ],
+  "$defs": {
+    "session": {
+      "type": "object",
+      "required": ["type", "schema", "session_id"],
+      "properties": {
+        "type": { "const": "session" },
+        "schema": {
+          "type": "string",
+          "pattern": "^matick-footage/events@1(\\.[0-9]+)?$",
+          "description": "Format id and major version."
+        },
+        "session_id": { "type": "string", "minLength": 1 },
+        "engine": { "type": "string" },
+        "project": { "type": "string" },
+        "build": { "type": "string" },
+        "platform": { "type": "string" },
+        "tester": { "type": "string" },
+        "recording": {
+          "type": "object",
+          "properties": {
+            "file": { "type": "string", "description": "File name of the recording this sidecar belongs to." },
+            "sync": {
+              "enum": ["obs", "timecode", "wallclock"],
+              "description": "How event times were aligned with the video."
+            },
+            "started_at": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "time": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Seconds from the first frame of the recording, on the recording's clock."
+    },
+    "kind": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*$",
+      "description": "Dotted, studio-defined kind. Reserved: level, marker, sync.flash."
+    },
+    "common": {
+      "properties": {
+        "label": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "importance": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "data": { "type": "object", "description": "Free-form fields, indexed as JSON." }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": ["type", "t", "kind"],
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "properties": {
+        "type": { "const": "event" },
+        "t": { "$ref": "#/$defs/time" },
+        "kind": { "$ref": "#/$defs/kind" }
+      }
+    },
+    "span": {
+      "type": "object",
+      "required": ["type", "t", "dur", "kind"],
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "properties": {
+        "type": { "const": "span" },
+        "t": { "$ref": "#/$defs/time" },
+        "dur": { "type": "number", "minimum": 0 },
+        "kind": { "$ref": "#/$defs/kind" }
+      }
+    },
+    "marker": {
+      "type": "object",
+      "required": ["type", "t"],
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "properties": {
+        "type": { "const": "marker" },
+        "t": { "$ref": "#/$defs/time" },
+        "kind": { "$ref": "#/$defs/kind" },
+        "source": { "type": "string", "description": "Who placed it, e.g. tester." }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+/* Matick UI: fonts, Tailwind and tokens. Its font @imports must precede every
+   other rule, so this import comes first. */
+@import "@khaos-systems/ui-core/tailwind.css";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply m-0 overflow-hidden bg-surface-base text-text-primary antialiased;
+}

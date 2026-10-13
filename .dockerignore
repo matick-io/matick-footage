@@ -1,0 +1,7 @@
+.git
+**/node_modules
+web/.matick
+web/src
+dev
+workers
+deploy

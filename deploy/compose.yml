@@ -1,0 +1,67 @@
+# The whole stack. Runs as a custom app on TrueNAS SCALE or on any Docker host.
+# Required: FOOTAGE_DIR, the recordings folder, mounted read-only.
+# Optional: FOOTAGE_DATA_DIR and FOOTAGE_DB_DIR put proxies and the database on
+# their own datasets instead of named volumes.
+name: matick-footage
+
+x-database: &database
+  FOOTAGE_DATABASE_URL: postgres://footage:${POSTGRES_PASSWORD:-footage}@postgres:5432/footage?sslmode=disable
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: footage
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-footage}
+      POSTGRES_DB: footage
+    volumes:
+      - ${FOOTAGE_DB_DIR:-db}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U footage -d footage"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  core:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    image: ghcr.io/matick-io/matick-footage-core:${FOOTAGE_VERSION:-dev}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *database
+      FOOTAGE_SCAN_INTERVAL: ${FOOTAGE_SCAN_INTERVAL:-30s}
+      FOOTAGE_STABLE_FOR: ${FOOTAGE_STABLE_FOR:-1m}
+      FOOTAGE_TRANSCRIBE_MODEL: ${FOOTAGE_TRANSCRIBE_MODEL:-small}
+      # name=prefix pairs, ;-separated: where editing machines see the footage.
+      FOOTAGE_EXPORT_TARGETS: ${FOOTAGE_EXPORT_TARGETS:-}
+    volumes:
+      - ${FOOTAGE_DIR:?set FOOTAGE_DIR to the recordings folder}:/footage:ro
+      - ${FOOTAGE_DATA_DIR:-data}:/data:ro
+    ports:
+      - "${FOOTAGE_PORT:-8420}:8080"
+
+  worker-media:
+    build: ../workers
+    image: ghcr.io/matick-io/matick-footage-worker:${FOOTAGE_VERSION:-dev}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *database
+      WORKER_STAGES: probe,proxy,transcribe
+      FOOTAGE_WHISPER_LANGUAGE: ${FOOTAGE_WHISPER_LANGUAGE:-}
+    volumes:
+      - ${FOOTAGE_DIR}:/footage:ro
+      - ${FOOTAGE_DATA_DIR:-data}:/data
+      - models:/models
+
+volumes:
+  db:
+  data:
+  models:

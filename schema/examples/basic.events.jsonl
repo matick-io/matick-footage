@@ -1,0 +1,6 @@
+{"type":"session","schema":"matick-footage/events@1","session_id":"0001","engine":"unreal","project":"SampleGame","build":"0.1.0-cl100","platform":"Win64","tester":"t01","recording":{"file":"basic.mp4","sync":"obs","started_at":"2026-10-13T14:32:05.120Z"}}
+{"type":"span","t":0.0,"dur":45.0,"kind":"level","label":"Forest 1-1"}
+{"type":"event","t":12.4,"kind":"player.death","label":"Fell off the bridge","tags":["fail"],"importance":1}
+{"type":"span","t":45.0,"dur":30.0,"kind":"level","label":"Forest 1-2"}
+{"type":"event","t":52.0,"kind":"boss.phase","label":"Warden phase 2","tags":["boss","combat"],"importance":3,"data":{"boss":"Warden","phase":2}}
+{"type":"marker","t":58.5,"source":"tester","tags":["funny"]}

@@ -1,0 +1,6 @@
+{"type":"session","schema":"matick-footage/events@1","session_id":"0002"}
+{"type":"event","t":-1,"kind":"player.death"}
+{"type":"span","t":3,"kind":"level","label":"no duration"}
+{"type":"event","t":4,"kind":"has space"}
+{"type":"event","t":5,"kind":"boss.phase","importance":7}
+{"type":"marker","t":6,"tags":["funny"]
