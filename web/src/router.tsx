@@ -7,7 +7,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { Activity, Clapperboard, Film, ListVideo, Search, type LucideIcon } from "lucide-react";
-import { AppLayout, AppSidebar, AppSidebarItem, useSidebarExpanded } from "@khaos-systems/ui-shell";
+import { AppLayout, AppSidebar, AppSidebarItem, useSidebarExpanded } from "@matick-io/ui-shell";
 import type { SearchParams } from "./api";
 import { SearchPage } from "./routes/SearchPage";
 import { RecordingsPage } from "./routes/RecordingsPage";

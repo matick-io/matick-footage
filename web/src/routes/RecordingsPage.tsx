@@ -1,11 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Badge, EmptyState } from "@khaos-systems/ui-core";
-import { Tile, VirtualTileGrid } from "@khaos-systems/ui-assets";
+import { Badge, EmptyState } from "@matick-io/ui";
 import { Film, Loader2 } from "lucide-react";
 import { api, type Recording } from "../api";
 import { formatClock, formatDate } from "../format";
 import { SpriteScrub } from "../components/SpriteScrub";
+import { ClipCard } from "../components/grid/ClipCard";
+import { VideoGrid } from "../components/grid/VideoGrid";
 
 function pending(rec: Recording): string | null {
   const busy = Object.entries(rec.stages).find(([, s]) => s.status === "queued" || s.status === "running");
@@ -22,37 +23,48 @@ export function RecordingsPage() {
   const recordings = list.data?.recordings ?? [];
   return (
     <div className="flex h-full flex-col">
-      <VirtualTileGrid
+      <VideoGrid
         items={recordings}
-        tileSize={260}
         getKey={(r) => String(r.id)}
         renderItem={(r) => {
           const busy = pending(r);
-          const failed = Object.entries(r.stages).filter(([, s]) => s.status === "failed").map(([n]) => n);
+          const failed = Object.entries(r.stages)
+            .filter(([, s]) => s.status === "failed")
+            .map(([n]) => n);
           const dur = r.duration ?? 0;
           return (
-            <Tile
-              label={r.name}
-              title={r.path}
-              fallback={busy ? <Loader2 className="h-6 w-6 animate-spin text-text-muted" /> : <Film className="h-6 w-6 text-text-muted" />}
-              thumbnailContent={
+            <ClipCard
+              picture={
                 r.sprite ? (
-                  <div className="flex h-full w-full flex-col">
-                    <div className="flex items-center gap-1 p-1.5">
-                      {r.session ? <Badge size="xs" tone="dim">{r.session.build}</Badge> : <Badge size="xs" tone="dim">no sidecar</Badge>}
-                      {failed.length ? <Badge size="xs" tone="danger">{failed.join(", ")} failed</Badge> : null}
-                      {busy ? <Badge size="xs" tone="info">{busy}</Badge> : null}
-                      <span className="ml-auto font-mono text-[10px] text-text-muted">{formatClock(dur)}</span>
-                    </div>
-                    <div className="flex flex-1 items-center">
-                      <SpriteScrub sprite={r.sprite} tIn={0} tOut={dur} poster={dur * 0.1} />
-                    </div>
+                  <SpriteScrub sprite={r.sprite} tIn={0} tOut={dur} poster={dur * 0.1} />
+                ) : (
+                  <div className="flex aspect-video items-center justify-center text-text-muted">
+                    {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Film className="h-6 w-6" />}
                   </div>
-                ) : undefined
+                )
               }
-              details={<p className="truncate text-[11px] text-text-muted">{formatDate(r.recorded_at)}{r.session ? ` · ${r.session.tester}` : ""}</p>}
-              busy={!r.sprite && busy ? { label: busy } : undefined}
-              onClick={() => void navigate({ to: "/recordings/$id", params: { id: String(r.id) } })}
+              title={r.name}
+              tooltip={r.path}
+              subtitle={`${formatDate(r.recorded_at)}${r.session ? ` · ${r.session.tester}` : ""}`}
+              badges={
+                <>
+                  <Badge size="xs" tone="dim">
+                    {r.session ? r.session.build : "no sidecar"}
+                  </Badge>
+                  {failed.length ? (
+                    <Badge size="xs" tone="danger">
+                      {failed.join(", ")} failed
+                    </Badge>
+                  ) : null}
+                  {busy ? (
+                    <Badge size="xs" tone="info">
+                      {busy}
+                    </Badge>
+                  ) : null}
+                </>
+              }
+              corner={formatClock(dur)}
+              onOpen={() => void navigate({ to: "/recordings/$id", params: { id: String(r.id) } })}
             />
           );
         }}

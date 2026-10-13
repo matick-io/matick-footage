@@ -1,0 +1,9 @@
+# Builds the deploy/compose.yml stack from this checkout instead of pulling it.
+# Paths resolve from deploy/, the first file's directory.
+services:
+  core:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+  worker-media:
+    build: ../workers

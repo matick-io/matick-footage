@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Dialog, Input, Select } from "@khaos-systems/ui-core";
+import { Button, Dialog, Input, Select } from "@matick-io/ui";
 import { ListVideo } from "lucide-react";
 import { api } from "../api";
 import { setActiveSelect, useActiveSelect } from "./useActiveSelect";

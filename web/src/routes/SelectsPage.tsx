@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, EmptyState, Input, Menu, ScrollArea, Select, Textarea, Tree, type TreeItem } from "@khaos-systems/ui-core";
-import { CountBadge } from "@khaos-systems/ui-assets";
+import { Badge, Button, EmptyState, Input, Menu, ScrollArea, Select, Textarea, Tree, type TreeItem } from "@matick-io/ui";
 import { Download, ListVideo, MoreHorizontal, Play, Plus, Trash2 } from "lucide-react";
 import { api, type SelectDetail, type SelectItem } from "../api";
 import { formatDuration, formatRange } from "../format";
@@ -48,7 +47,7 @@ export function SelectsPage() {
                 >
                   <ListVideo className="h-4 w-4 shrink-0" />
                   <span className="min-w-0 flex-1 truncate text-left">{s.name}</span>
-                  <CountBadge tone="dim">{s.item_count}</CountBadge>
+                  <Badge size="xs" tone="dim">{s.item_count}</Badge>
                 </Button>
               </li>
             ))}

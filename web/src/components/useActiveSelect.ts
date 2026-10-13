@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@khaos-systems/ui-core";
+import { useToast } from "@matick-io/ui";
 import { api, type SelectItem } from "../api";
 import { formatRange } from "../format";
 

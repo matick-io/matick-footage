@@ -1,6 +1,9 @@
 /* Matick UI: fonts, Tailwind and tokens. Its font @imports must precede every
    other rule, so this import comes first. */
-@import "@khaos-systems/ui-core/tailwind.css";
+@import "@matick-io/ui/tailwind.css";
+@import "@matick-io/ui-shell/tailwind.css";
+@import "@matick-io/ui-media/tailwind.css";
+@import "@matick-io/ui-timeline/tailwind.css";
 
 html,
 body,

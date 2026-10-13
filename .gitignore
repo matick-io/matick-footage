@@ -1,7 +1,6 @@
 # Dependencies and builds
 node_modules/
 web/dist/
-web/.matick
 *.tsbuildinfo
 __pycache__/
 *.egg-info/
@@ -11,4 +10,3 @@ __pycache__/
 dev/footage/
 dev/data/
 .env
-local.mk

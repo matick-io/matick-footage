@@ -1,4 +1,4 @@
-import { formatClock } from "@khaos-systems/ui-review";
+import { formatClock } from "@matick-io/ui-timeline";
 import type { Match } from "./api";
 
 export { formatClock };

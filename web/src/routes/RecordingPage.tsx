@@ -1,17 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, EmptyState, Kbd, ScrollArea, Tabs } from "@khaos-systems/ui-core";
-import {
-  ReviewMediaProvider,
-  ReviewStage,
-  ReviewVideo,
-  Timeline,
-  Transport,
-  useReviewHotkeys,
-  useReviewMedia,
-  type TimelineTrack,
-} from "@khaos-systems/ui-review";
+import { Badge, Button, EmptyState, Kbd, ScrollArea, Tabs } from "@matick-io/ui";
+import { MediaProvider, MediaStage, MediaVideo, Transport, useMedia, useMediaHotkeys } from "@matick-io/ui-media";
+import { Timeline, type TimelineTrack } from "@matick-io/ui-timeline";
 import { Flag, ListPlus, Loader2, RotateCcw } from "lucide-react";
 import { api, type Event, type Line, type Recording } from "../api";
 import { formatClock, formatDate, formatDuration, formatRange } from "../format";
@@ -50,9 +42,9 @@ export function RecordingPage() {
     );
   }
   return (
-    <ReviewMediaProvider fps={rec.fps ?? 30} loopRegion>
+    <MediaProvider fps={rec.fps ?? 30} loopRegion>
       <Player rec={rec} events={events.data ?? []} lines={transcript.data ?? []} />
-    </ReviewMediaProvider>
+    </MediaProvider>
   );
 }
 
@@ -79,7 +71,7 @@ function Header({ rec, children }: { rec: Recording; children?: React.ReactNode 
 /** Seeks to the clip the page was opened for, once the video knows its length. */
 function useInitialClip() {
   const { in: tIn, out: tOut } = route.useSearch();
-  const media = useReviewMedia();
+  const media = useMedia();
   const done = useRef(false);
   useEffect(() => {
     if (done.current || media.duration <= 0) return;
@@ -92,8 +84,8 @@ function useInitialClip() {
 }
 
 function Player({ rec, events, lines }: { rec: Recording; events: Event[]; lines: Line[] }) {
-  const media = useReviewMedia();
-  useReviewHotkeys();
+  const media = useMedia();
+  useMediaHotkeys();
   useInitialClip();
   const { addClip, active, adding } = useActiveSelect();
   const { in: loopIn, out: loopOut } = media.loop;
@@ -179,9 +171,9 @@ function Player({ rec, events, lines }: { rec: Recording; events: Event[]; lines
       </Header>
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
-          <ReviewStage aspectRatio={(rec.width ?? 16) / (rec.height ?? 9)} className="rounded">
-            <ReviewVideo src={rec.proxy_url ?? ""} />
-          </ReviewStage>
+          <MediaStage aspectRatio={(rec.width ?? 16) / (rec.height ?? 9)} className="rounded">
+            <MediaVideo src={rec.proxy_url ?? ""} />
+          </MediaStage>
           <Timeline
             tracks={tracks}
             onItemClick={seekTo}
@@ -228,7 +220,7 @@ function SidePanel({ rec, events, lines }: { rec: Recording; events: Event[]; li
 }
 
 function EventList({ events }: { events: Event[] }) {
-  const media = useReviewMedia();
+  const media = useMedia();
   if (!events.length) return <EmptyState compact title="No events" detail="This recording has no sidecar." />;
   return (
     <ScrollArea className="h-full">
@@ -258,7 +250,7 @@ function EventList({ events }: { events: Event[] }) {
 
 /** The transcript follows playback: the spoken line is highlighted and kept in view. */
 function TranscriptList({ lines }: { lines: Line[] }) {
-  const media = useReviewMedia();
+  const media = useMedia();
   const now = media.currentTime;
   const current = lines.findIndex((l) => now >= l.t_in && now < l.t_out);
   const refs = useRef<(HTMLLIElement | null)[]>([]);

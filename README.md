@@ -33,30 +33,34 @@ recordings/ (read-only)  ──▶  core (Go)  ──▶  Postgres  ◀──  w
 
 ## Running it
 
-Needs Docker. The stack in [`deploy/compose.yml`](deploy/compose.yml) is the
-whole deployment:
+Needs Docker. [`deploy/compose.yml`](deploy/compose.yml) is the whole
+deployment and pulls the published images from GitHub's container registry:
 
 ```bash
 FOOTAGE_DIR=/mnt/footage docker compose -f deploy/compose.yml up -d
 ```
 
 Then open http://localhost:8420. Settings are `FOOTAGE_*` variables, listed in
-the compose file.
+the compose file. On TrueNAS SCALE, paste the compose file into a custom app
+("Install via YAML") with the `${…}` values replaced by your dataset paths.
+
+Images are published by CI: `:main` for every push to main, and `:X.Y.Z` plus
+`:latest` for a tag `vX.Y.Z`.
 
 ## Developing
 
-Local development runs the same stack against synthetic recordings:
+Local development builds the same stack from source
+([`dev/compose.yml`](dev/compose.yml)) and runs it against synthetic recordings:
 
 ```bash
 make samples   # writes test recordings with sidecars and speech to dev/footage
-make up        # builds the UI and starts the stack
+make up        # builds the images and starts the stack
 make web-dev   # optional: Vite with hot reload on :5173, using the stack's API
 make test
 ```
 
-The UI is built with the matick-ui design system. Until its packages are on npm,
-`web/` links them from a matick checkout: put `MATICK_DIR := /path/to/matick` in
-`local.mk`.
+The UI is built with the [`@matick-io/ui`](https://www.npmjs.com/package/@matick-io/ui)
+design system.
 
 ## Layout
 
@@ -67,7 +71,7 @@ The UI is built with the matick-ui design system. Until its packages are on npm,
 | `workers/` | Python media worker: probe, proxy, transcribe |
 | `web/` | Web UI |
 | `deploy/` | Compose stack |
-| `dev/` | Synthetic sample generator |
+| `dev/` | Build override and synthetic sample generator |
 
 ## License
 

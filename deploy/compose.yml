@@ -1,4 +1,5 @@
-# The whole stack. Runs as a custom app on TrueNAS SCALE or on any Docker host.
+# The whole stack, from published images. Runs as a custom app on TrueNAS SCALE
+# or on any Docker host; dev/compose.yml builds the same stack from source.
 # Required: FOOTAGE_DIR, the recordings folder, mounted read-only.
 # Optional: FOOTAGE_DATA_DIR and FOOTAGE_DB_DIR put proxies and the database on
 # their own datasets instead of named volumes.
@@ -24,10 +25,7 @@ services:
       retries: 30
 
   core:
-    build:
-      context: ..
-      dockerfile: server/Dockerfile
-    image: ghcr.io/matick-io/matick-footage-core:${FOOTAGE_VERSION:-dev}
+    image: ghcr.io/matick-io/matick-footage-core:${FOOTAGE_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -46,8 +44,7 @@ services:
       - "${FOOTAGE_PORT:-8420}:8080"
 
   worker-media:
-    build: ../workers
-    image: ghcr.io/matick-io/matick-footage-worker:${FOOTAGE_VERSION:-dev}
+    image: ghcr.io/matick-io/matick-footage-worker:${FOOTAGE_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       postgres:

@@ -1,7 +1,6 @@
 .git
 **/node_modules
-web/.matick
-web/src
+web/dist
 dev
 workers
 deploy

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, EmptyState, ScrollArea } from "@khaos-systems/ui-core";
+import { Badge, Button, EmptyState, ScrollArea } from "@matick-io/ui";
 import { Activity, RotateCcw } from "lucide-react";
 import { api, type Job } from "../api";
 import { formatDate } from "../format";

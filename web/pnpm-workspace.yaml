@@ -2,3 +2,10 @@ packages: []
 allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
+# Our own design system: trusted, and needed the day it is released.
+minimumReleaseAgeExclude:
+  - '@matick-io/ui'
+  - '@matick-io/ui-shell'
+  - '@matick-io/ui-commands'
+  - '@matick-io/ui-media'
+  - '@matick-io/ui-timeline'

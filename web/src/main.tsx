@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
-import { ToastProvider, initUiTheme } from "@khaos-systems/ui-core";
+import { ToastProvider, initUiTheme } from "@matick-io/ui";
 import { router } from "./router";
 import "./styles.css";
 
