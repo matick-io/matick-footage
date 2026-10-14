@@ -40,21 +40,15 @@ library (uploads) ◀─────────────  events stage      
 ## Running it
 
 Needs Docker. [`deploy/compose.yml`](deploy/compose.yml) is the whole
-deployment and pulls the published images from GitHub's container registry:
+deployment and pulls the published images:
 
 ```bash
 FOOTAGE_DIR=/mnt/footage docker compose -f deploy/compose.yml up -d
 ```
 
-Then open http://localhost:8420. `FOOTAGE_DIR` is optional: without it, the app
-holds only what you upload, by dropping files on the page or from a script:
-
-```bash
-curl -T session_0142.mp4 http://localhost:8420/api/v1/uploads/session_0142.mp4
-```
-
-Settings are `FOOTAGE_*` variables, listed in the compose file. On TrueNAS SCALE, paste the compose file into a custom app
-("Install via YAML") with the `${…}` values replaced by your dataset paths.
+Then open http://localhost:8420 and drop recordings on the Recordings page, or
+let it index `FOOTAGE_DIR`, which is optional. The [deploy guide](docs/deploy.md)
+covers storage, permissions, settings, upgrades and backups.
 
 Images are published by CI: `:main` for every push to main, and `:X.Y.Z` plus
 `:latest` for a tag `vX.Y.Z`.
@@ -83,6 +77,7 @@ design system.
 | `workers/` | Python media worker: probe, proxy, transcribe |
 | `web/` | Web UI |
 | `deploy/` | Compose stack |
+| `docs/` | Deploy guide |
 | `dev/` | Build override and synthetic sample generator |
 
 ## License

@@ -41,8 +41,11 @@ function Root() {
   const navigate = useNavigate();
   const expanded = useSidebarExpanded();
   const here = current(pathname);
+  // Uploads run from here, so leaving the page doesn't stop one; only the
+  // Recordings page offers them.
   const upload = useUploads();
   const onFiles = useCallback((files: File[]) => void upload(files), [upload]);
+  const uploads = pathname === "/recordings";
   return (
     <AppLayout
       chrome="sidebar"
@@ -67,14 +70,16 @@ function Root() {
         </AppSidebar>
       }
       titleBar={<span className="text-sm font-medium">{here?.label}</span>}
-      titleBarEnd={<UploadButton onFiles={onFiles} />}
+      titleBarEnd={uploads ? <UploadButton onFiles={onFiles} /> : null}
     >
       <Outlet />
-      <DropZone
-        onFiles={onFiles}
-        title="Drop to upload to the library"
-        detail="Videos, each with its .events.jsonl sidecar if it has one."
-      />
+      {uploads ? (
+        <DropZone
+          onFiles={onFiles}
+          title="Drop to upload to the library"
+          detail="Videos, each with its .events.jsonl sidecar if it has one."
+        />
+      ) : null}
     </AppLayout>
   );
 }
