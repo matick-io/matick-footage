@@ -12,7 +12,10 @@ WORKDIR /src
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server/ ./
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /footage ./cmd/footage
+ARG VERSION=dev
+ARG COMMIT=
+RUN CGO_ENABLED=0 go build -trimpath -o /footage \
+    -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" ./cmd/footage
 # Mount points owned by the runtime user: new named volumes copy the owner.
 RUN mkdir -p /mounts/library /mounts/data
 

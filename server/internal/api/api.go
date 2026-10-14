@@ -23,6 +23,8 @@ type Server struct {
 	DB      *pgxpool.Pool
 	Cfg     config.Config
 	Sources *storage.Set
+	// Version and Commit identify the build, shown in the UI.
+	Version, Commit string
 }
 
 func (s *Server) Handler() http.Handler {
@@ -80,6 +82,8 @@ func (s *Server) config(w http.ResponseWriter, _ *http.Request) {
 		"export_targets":   targets,
 		"transcribe_model": s.Cfg.TranscribeModel,
 		"upload_max":       s.Cfg.UploadMax,
+		"version":          s.Version,
+		"commit":           s.Commit,
 	})
 }
 

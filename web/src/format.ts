@@ -22,6 +22,12 @@ export function formatDate(iso: string): string {
   });
 }
 
+/** "v0.3.0" for a release, "main · 4f9cc60" for a branch build, "dev" locally. */
+export function formatVersion(version: string, commit: string): string {
+  if (/^\d+\.\d+\.\d+/.test(version)) return `v${version}`;
+  return commit ? `${version} · ${commit.slice(0, 7)}` : version;
+}
+
 /** One line describing why a clip matched. */
 export function describeMatch(m: Match): string {
   if (m.source === "transcript") return `“${m.text ?? ""}”`;

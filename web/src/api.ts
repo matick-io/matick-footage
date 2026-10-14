@@ -154,6 +154,9 @@ export interface Config {
   transcribe_model: string;
   /** The largest file an upload may be, in bytes. */
   upload_max: number;
+  /** The release (0.3.0), or a branch (main) with its commit. */
+  version: string;
+  commit: string;
 }
 
 /** Filters as they appear in the URL and the API query string. */

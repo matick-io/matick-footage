@@ -9,7 +9,9 @@ import {
 } from "@tanstack/react-router";
 import { Activity, Clapperboard, Film, ListVideo, Search, type LucideIcon } from "lucide-react";
 import { AppLayout, AppSidebar, AppSidebarItem, useSidebarExpanded } from "@matick-io/ui-shell";
-import type { SearchParams } from "./api";
+import { useQuery } from "@tanstack/react-query";
+import { api, type SearchParams } from "./api";
+import { formatVersion } from "./format";
 import { SearchPage } from "./routes/SearchPage";
 import { RecordingsPage } from "./routes/RecordingsPage";
 import { DropZone } from "./components/upload/DropZone";
@@ -46,6 +48,8 @@ function Root() {
   const upload = useUploads();
   const onFiles = useCallback((files: File[]) => void upload(files), [upload]);
   const uploads = pathname === "/recordings";
+  const config = useQuery({ queryKey: ["config"], queryFn: api.config });
+  const version = config.data ? formatVersion(config.data.version, config.data.commit) : "";
   return (
     <AppLayout
       chrome="sidebar"
@@ -67,6 +71,15 @@ function Root() {
               <Icon className="h-4 w-4" />
             </AppSidebarItem>
           ))}
+          {version ? (
+            <li
+              title={`Footage ${version}`}
+              className={`mt-auto truncate pb-1 text-[10px] text-text-muted ${expanded ? "px-2.5" : "text-center"}`}
+            >
+              {/* Collapsed, only the release or branch fits. */}
+              {expanded ? version : version.split(" · ")[0]}
+            </li>
+          ) : null}
         </AppSidebar>
       }
       titleBar={<span className="text-sm font-medium">{here?.label}</span>}

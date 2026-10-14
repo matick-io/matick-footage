@@ -22,6 +22,12 @@ import (
 	"github.com/matick-io/matick-footage/server/internal/store"
 )
 
+// Set at build time: the release, or the branch name, and the commit.
+var (
+	version = "dev"
+	commit  = ""
+)
+
 func main() {
 	args := os.Args[1:]
 	cmd := "serve"
@@ -69,7 +75,7 @@ func serve() error {
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           (&api.Server{DB: db, Cfg: cfg, Sources: sources}).Handler(),
+		Handler:           (&api.Server{DB: db, Cfg: cfg, Sources: sources, Version: version, Commit: commit}).Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	go func() {
@@ -81,7 +87,7 @@ func serve() error {
 	for _, src := range sources.All {
 		slog.Info("source", "name", src.Name, "root", src.Root(), "library", src.Library)
 	}
-	slog.Info("serving", "addr", cfg.Addr, "data", cfg.Data)
+	slog.Info("serving", "addr", cfg.Addr, "data", cfg.Data, "version", version, "commit", commit)
 	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
