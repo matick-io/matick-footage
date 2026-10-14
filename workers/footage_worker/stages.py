@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import shutil
@@ -21,6 +22,11 @@ from .queue import Job
 
 SPRITE_COLS, SPRITE_ROWS = 10, 10
 SPRITE_W, SPRITE_H = 160, 90
+# Proxies drop every other frame (or more) above this; scrubbing doesn't need 60.
+MAX_PROXY_FPS = 30
+PROXY_DEVICES = ("cpu", "cuda")
+
+log = logging.getLogger("footage_worker")
 
 
 @dataclass
@@ -106,12 +112,60 @@ def probe(ctx: Context, job: Job) -> dict:
     return result
 
 
+def proxy_rate(fps: float | None) -> Fraction | None:
+    """The proxy frame rate when the source's is too high: the source's divided
+    by a whole number, so 59.94 becomes 29.97 and 50 becomes 25. None keeps it."""
+    if not fps:
+        return None
+    rate = Fraction(fps).limit_denominator(1001)
+    n = math.ceil(rate / MAX_PROXY_FPS)
+    return rate / n if n > 1 else None
+
+
+def proxy_command(device: str, source: str, fps: float | None, interval: float,
+                  out: Path, sheets: Path) -> list[str]:
+    """One decode feeds the proxy and the thumbnail sheets. With cuda, decoding,
+    scaling and encoding stay on the GPU; only the few thumbnail frames come
+    back to the CPU to be tiled."""
+    rate = proxy_rate(fps)
+    cap = f"fps={rate.numerator}/{rate.denominator}," if rate else ""
+    gop = str(max(1, round(rate or fps or 30)))  # a keyframe every second
+    height = "'min(720,trunc(ih/2)*2)'"
+    tiles = (
+        f"scale={SPRITE_W}:{SPRITE_H}:force_original_aspect_ratio=decrease,"
+        f"pad={SPRITE_W}:{SPRITE_H}:(ow-iw)/2:(oh-ih)/2,tile={SPRITE_COLS}x{SPRITE_ROWS}"
+    )
+    if device == "cuda":
+        decode = ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "8"]
+        scale = f"scale_cuda=-2:{height}"
+        thumbs = f"fps=1/{interval},hwdownload,format=nv12,{tiles}"
+        encode = ["-c:v", "h264_nvenc", "-preset", "p4", "-rc", "vbr", "-cq", "23", "-b:v", "0",
+                  "-g", gop, "-forced-idr", "1"]
+    else:
+        decode = []
+        scale = f"scale=-2:{height},format=yuv420p"
+        thumbs = f"fps=1/{interval},{tiles}"
+        encode = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                  "-force_key_frames", "expr:gte(t,n_forced*1)"]
+    return [
+        "ffmpeg", "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
+        *decode, "-i", source,
+        "-filter_complex", f"[0:v:0]{cap}split=2[p][s];[p]{scale}[pv];[s]{thumbs}[sv]",
+        "-map", "[pv]", "-map", "0:a:0?", *encode,
+        "-c:a", "aac", "-b:a", "128k", "-ac", "2", "-movflags", "+faststart", str(out),
+        "-map", "[sv]", "-q:v", "4", str(sheets / "sheet_%03d.jpg"),
+    ]
+
+
 def proxy(ctx: Context, job: Job) -> dict:
-    """A 720p H.264 proxy with a keyframe every second, for scrubbing, plus
-    thumbnail sheets for hover-scrub. One decode feeds both."""
+    """A 720p H.264 proxy of at most 30 fps with a keyframe every second, for
+    scrubbing, plus thumbnail sheets for hover-scrub. FOOTAGE_PROXY_DEVICE=cuda
+    uses an NVIDIA GPU; if that fails, the CPU makes this proxy and the result
+    says why."""
     rec = ctx.recording(job.recording_id)
     duration = rec["duration"] or 0
     interval = 1.0 if duration and duration < 120 else 2.0
+    device = os.environ.get("FOOTAGE_PROXY_DEVICE", "cpu")
 
     proxies = ctx.data / "proxies"
     sprites = ctx.data / "sprites"
@@ -120,27 +174,24 @@ def proxy(ctx: Context, job: Job) -> dict:
     out = proxies / f"{job.recording_id}.mp4"
     sheets = sprites / str(job.recording_id)
 
+    fallback = None
+    source = ctx.original(rec)
     with tempfile.TemporaryDirectory(dir=ctx.data) as tmp:
         tmp_proxy = Path(tmp) / "proxy.mp4"
         tmp_sheets = Path(tmp) / "sheets"
-        tmp_sheets.mkdir()
-        graph = (
-            "[0:v:0]split=2[p][s];"
-            "[p]scale=-2:'min(720,trunc(ih/2)*2)',format=yuv420p[pv];"
-            f"[s]fps=1/{interval},"
-            f"scale={SPRITE_W}:{SPRITE_H}:force_original_aspect_ratio=decrease,"
-            f"pad={SPRITE_W}:{SPRITE_H}:(ow-iw)/2:(oh-ih)/2,tile={SPRITE_COLS}x{SPRITE_ROWS}[sv]"
-        )
-        run([
-            "ffmpeg", "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
-            "-i", ctx.original(rec), "-filter_complex", graph,
-            "-map", "[pv]", "-map", "0:a:0?",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            "-force_key_frames", "expr:gte(t,n_forced*1)",
-            "-c:a", "aac", "-b:a", "128k", "-ac", "2",
-            "-movflags", "+faststart", str(tmp_proxy),
-            "-map", "[sv]", "-q:v", "4", str(tmp_sheets / "sheet_%03d.jpg"),
-        ])
+        for attempt in dict.fromkeys([device, "cpu"]):
+            shutil.rmtree(tmp_sheets, ignore_errors=True)
+            tmp_sheets.mkdir()
+            try:
+                run(proxy_command(attempt, source, rec["fps"], interval, tmp_proxy, tmp_sheets))
+            except RuntimeError as err:
+                if attempt == "cpu":
+                    raise
+                log.warning("proxy on %s failed, falling back to the CPU: %s", attempt, err)
+                fallback = f"{attempt}: {str(err)[-500:]}"
+                continue
+            device = attempt
+            break
         os.replace(tmp_proxy, out)
         if sheets.exists():
             shutil.rmtree(sheets)
@@ -160,7 +211,10 @@ def proxy(ctx: Context, job: Job) -> dict:
     if cur.rowcount == 0:  # deleted while this ran
         out.unlink(missing_ok=True)
         shutil.rmtree(sheets, ignore_errors=True)
-    return {"proxy_bytes": size, **sprite}
+    result = {"proxy_bytes": size, "device": device, **sprite}
+    if fallback:
+        result["fallback"] = fallback
+    return result
 
 
 _models: dict[str, object] = {}
@@ -222,6 +276,6 @@ def transcribe(ctx: Context, job: Job) -> dict:
 
 STAGES: dict[str, Stage] = {
     "probe": Stage(1, probe),
-    "proxy": Stage(1, proxy),
+    "proxy": Stage(2, proxy),
     "transcribe": Stage(1, transcribe),
 }

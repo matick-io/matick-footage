@@ -71,6 +71,36 @@ func Ingest(ctx context.Context, db *pgxpool.Pool, source string, video File, sc
 	return id, err
 }
 
+// QueueStages queues whatever stages known recordings lack, such as a stage
+// whose version was bumped or a new transcription model. The scanner only
+// queues for new or changed files, so this runs once at startup.
+func QueueStages(ctx context.Context, db *pgxpool.Pool, transcribeModel string) error {
+	rows, err := db.Query(ctx, `
+		SELECT id, size, mtime, coalesce(sidecar_key, '') FROM recordings WHERE missing_since IS NULL`)
+	if err != nil {
+		return err
+	}
+	type rec struct {
+		id         int64
+		file       File
+		sidecarKey string
+	}
+	recs, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (rec, error) {
+		var r rec
+		err := row.Scan(&r.id, &r.file.Size, &r.file.ModTime, &r.sidecarKey)
+		return r, err
+	})
+	if err != nil {
+		return err
+	}
+	for _, r := range recs {
+		if err := queue.Enqueue(ctx, db, r.id, pipeline.Specs(r.file.key(), r.sidecarKey, transcribeModel)...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type Scanner struct {
 	DB              *pgxpool.Pool
 	Sources         []*storage.Source
@@ -97,6 +127,9 @@ type known struct {
 }
 
 func (s *Scanner) Run(ctx context.Context, interval time.Duration) {
+	if err := QueueStages(ctx, s.DB, s.TranscribeModel); err != nil {
+		slog.Error("queue stages", "err", err)
+	}
 	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {

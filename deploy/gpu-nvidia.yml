@@ -1,0 +1,15 @@
+# Makes proxies on an NVIDIA GPU (NVENC). Needs the NVIDIA container toolkit on
+# the host. Use it on top of compose.yml:
+#   docker compose -f compose.yml -f gpu-nvidia.yml up -d
+services:
+  worker-media:
+    environment:
+      FOOTAGE_PROXY_DEVICE: cuda
+      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

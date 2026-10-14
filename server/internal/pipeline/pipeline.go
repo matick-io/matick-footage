@@ -18,7 +18,7 @@ import (
 // Stage versions. Bumping one re-runs that stage for every recording.
 const (
 	ProbeVersion      = 1
-	ProxyVersion      = 1
+	ProxyVersion      = 2
 	TranscribeVersion = 1
 	EventsVersion     = 1
 )

@@ -13,7 +13,7 @@ from pathlib import Path
 import psycopg
 
 from . import queue
-from .stages import STAGES, Context
+from .stages import PROXY_DEVICES, STAGES, Context
 
 log = logging.getLogger("footage_worker")
 
@@ -45,6 +45,8 @@ def main() -> None:
     if unknown:
         raise SystemExit(f"unknown stages {unknown}; this worker runs {list(STAGES)}")
     keys = [f"{n}:{STAGES[n].version}" for n in names]
+    if (device := os.environ.get("FOOTAGE_PROXY_DEVICE", "cpu")) not in PROXY_DEVICES:
+        raise SystemExit(f"FOOTAGE_PROXY_DEVICE={device}; want one of {', '.join(PROXY_DEVICES)}")
     worker = os.environ.get("WORKER_NAME") or f"worker@{socket.gethostname()}"
 
     def stop(*_):

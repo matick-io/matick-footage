@@ -66,6 +66,8 @@ services:
       <<: *database
       FOOTAGE_CORE_URL: http://core:8080
       WORKER_STAGES: probe,proxy,transcribe
+      # cpu or cuda. The GPU also needs passing through; see gpu-nvidia.yml.
+      FOOTAGE_PROXY_DEVICE: ${FOOTAGE_PROXY_DEVICE:-cpu}
       FOOTAGE_WHISPER_LANGUAGE: ${FOOTAGE_WHISPER_LANGUAGE:-}
     volumes:
       - ${FOOTAGE_DIR:-footage}:/footage:ro

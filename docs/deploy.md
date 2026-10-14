@@ -69,9 +69,28 @@ datasets.
 | `FOOTAGE_UPLOAD_MAX` | `50G` | Largest upload. |
 | `FOOTAGE_SCAN_INTERVAL` | `30s` | How often watched folders are rescanned. |
 | `FOOTAGE_STABLE_FOR` | `1m` | How long a file must stop changing before it's indexed. |
+| `FOOTAGE_PROXY_DEVICE` | `cpu` | What makes proxies: `cpu`, or `cuda` for an NVIDIA GPU. See [GPU proxies](#gpu-proxies). |
 | `FOOTAGE_TRANSCRIBE_MODEL` | `small` | Speech model: `tiny`, `base`, `small`, `medium`, `large-v3`, or `off`. |
 | `FOOTAGE_WHISPER_LANGUAGE` | detect | Language code, such as `en`, when detection guesses wrong. |
 | `FOOTAGE_EXPORT_TARGETS` | none | See [Exporting](#exporting). |
+
+## GPU proxies
+
+Making proxies is most of the indexing time. On a CPU it runs at about real
+time; an NVIDIA GPU (NVENC, Maxwell or newer) makes it much faster. Proxies are
+720p at up to 30 fps either way. If a GPU proxy fails, the CPU makes that one
+instead, and the job's result on the Jobs page shows the device used and why.
+
+Install the NVIDIA container toolkit on the host, fetch
+[`gpu-nvidia.yml`](../deploy/gpu-nvidia.yml) next to `compose.yml`, and start
+with both:
+
+```bash
+docker compose -f compose.yml -f gpu-nvidia.yml up -d
+```
+
+On TrueNAS SCALE, add that file's `environment` and `deploy` lines to the
+`worker-media` service in the app's YAML.
 
 ## Adding footage
 
