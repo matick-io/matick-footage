@@ -31,14 +31,14 @@ an empty folder of its own.
 
 ```bash
 mkdir footage && cd footage
-VERSION=0.2.1   # the release to run; see the repository's Releases page
+VERSION=0.3.0   # the release to run; see the repository's Releases page
 curl -fsSLo compose.yml https://raw.githubusercontent.com/matick-io/matick-footage/v$VERSION/deploy/compose.yml
 ```
 
 Compose reads settings from a `.env` file next to `compose.yml`:
 
 ```ini
-FOOTAGE_VERSION=0.2.1
+FOOTAGE_VERSION=0.3.0
 FOOTAGE_DIR=/mnt/tank/recordings
 FOOTAGE_LIBRARY_DIR=/mnt/tank/footage/library
 FOOTAGE_DATA_DIR=/mnt/tank/footage/data
@@ -54,15 +54,15 @@ Then open `http://<host>:8420`. The first transcription downloads the speech
 model, so the worker needs internet access once.
 
 **TrueNAS SCALE:** create a custom app with "Install via YAML" and paste in
-`compose.yml`, replacing each `${…}` with your own value. These containers use
-uid 1000, not TrueNAS's own apps user (568), so grant uid 1000 access to the
-datasets.
+`compose.yml`, replacing each `${…}` with your own value. `POSTGRES_PASSWORD`
+appears twice; use the same value in both. These containers use uid 1000, not
+TrueNAS's own apps user (568), so grant uid 1000 access to the datasets.
 
 ## Settings
 
 | Variable | Default | |
 |---|---|---|
-| `FOOTAGE_VERSION` | `latest` | Image tag. Pin a release, such as `0.2.1`. |
+| `FOOTAGE_VERSION` | `latest` | Image tag. Pin a release, such as `0.3.0`. |
 | `FOOTAGE_PORT` | `8420` | Port on the host. |
 | `POSTGRES_PASSWORD` | `footage` | Only used when the database is first created. |
 | `FOOTAGE_WATCH` | `footage=file:///footage` | Watched sources, `name=url;…`. |
@@ -89,8 +89,9 @@ with both:
 docker compose -f compose.yml -f gpu-nvidia.yml up -d
 ```
 
-On TrueNAS SCALE, add that file's `environment` and `deploy` lines to the
-`worker-media` service in the app's YAML.
+On TrueNAS SCALE, turn on "Install NVIDIA Drivers" in the Apps settings, then
+add that file's `environment` and `deploy` lines to `worker-media` in the app's
+YAML.
 
 ## Adding footage
 
@@ -106,6 +107,14 @@ On TrueNAS SCALE, add that file's `environment` and `deploy` lines to the
 
 Previews, thumbnails and transcripts follow in the background; the Jobs page
 shows progress.
+
+## Checking it works
+
+1. `http://<host>:8420` loads, and the Recordings page lists the watched folder's
+   recordings within a few minutes.
+2. A short video dropped on the Recordings page appears right away.
+3. On the Jobs page, its probe, proxy and transcribe jobs finish as done. With a
+   GPU, the proxy job's result shows `"device": "cuda"`.
 
 ## Exporting
 
