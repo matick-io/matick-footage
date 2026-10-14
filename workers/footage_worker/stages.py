@@ -136,7 +136,8 @@ def proxy_command(device: str, source: str, fps: float | None, interval: float,
         f"pad={SPRITE_W}:{SPRITE_H}:(ow-iw)/2:(oh-ih)/2,tile={SPRITE_COLS}x{SPRITE_ROWS}"
     )
     if device == "cuda":
-        decode = ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "8"]
+        # No -extra_hw_frames: with 4 or more, a Quadro K2200 can't create the decoder.
+        decode = ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"]
         scale = f"scale_cuda=-2:{height}"
         thumbs = f"fps=1/{interval},hwdownload,format=nv12,{tiles}"
         encode = ["-c:v", "h264_nvenc", "-preset", "p4", "-rc", "vbr", "-cq", "23", "-b:v", "0",
