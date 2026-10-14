@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, EmptyState, Kbd, ScrollArea, Tabs } from "@matick-io/ui";
+import { AlertDialog, Badge, Button, Dialog, EmptyState, Kbd, ScrollArea, Tabs, useToast } from "@matick-io/ui";
 import { MediaProvider, MediaStage, MediaVideo, Transport, useMedia, useMediaHotkeys } from "@matick-io/ui-media";
 import { Timeline, type TimelineTrack } from "@matick-io/ui-timeline";
-import { Flag, ListPlus, Loader2, RotateCcw } from "lucide-react";
+import { Flag, ListPlus, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { api, type Event, type Line, type Recording } from "../api";
 import { formatClock, formatDate, formatDuration, formatRange } from "../format";
 import { eventColor } from "../components/importance";
@@ -63,8 +63,58 @@ function Header({ rec, children }: { rec: Recording; children?: React.ReactNode 
           {rec.duration ? ` · ${formatClock(rec.duration)}` : ""}
         </p>
       </div>
-      <div className="ml-auto flex items-center gap-2">{children}</div>
+      <div className="ml-auto flex items-center gap-2">
+        {children}
+        {rec.library ? <DeleteRecording rec={rec} /> : null}
+      </div>
     </div>
+  );
+}
+
+/** Only library recordings can be deleted; watched folders belong to whatever writes them. */
+function DeleteRecording({ rec }: { rec: Recording }) {
+  const [open, setOpen] = useState(false);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const toaster = useToast();
+  const remove = useMutation({
+    mutationFn: () => api.deleteRecording(rec.id),
+    onSuccess: () => {
+      setOpen(false);
+      for (const key of ["recordings", "selects", "select"]) void qc.invalidateQueries({ queryKey: [key] });
+      toaster?.toast(`Deleted ${rec.name}`, { variant: "success" });
+      void navigate({ to: "/recordings" });
+    },
+    onError: (err) => toaster?.toast("Could not delete the recording", { variant: "error", description: String(err) }),
+  });
+  return (
+    <>
+      <Button
+        size="small"
+        variant="ghost"
+        kind="icon"
+        aria-label="Delete recording"
+        tooltip="Delete recording"
+        onClick={() => setOpen(true)}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+      <AlertDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Delete recording"
+        description={`Delete ${rec.name} from the library? Its sidecar, transcript and proxy go with it, and its clips are removed from selects. This can't be undone.`}
+      >
+        <Dialog.Footer>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" disabled={remove.isPending} onClick={() => remove.mutate()}>
+            {remove.isPending ? "Deleting…" : "Delete"}
+          </Button>
+        </Dialog.Footer>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -285,6 +335,7 @@ function Info({ rec }: { rec: Recording }) {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["recording", rec.id] }),
   });
   const rows: [string, string][] = [
+    ["Source", rec.source],
     ["File", rec.path],
     ["Duration", rec.duration ? formatDuration(rec.duration) : "—"],
     ["Video", rec.width ? `${rec.width}×${rec.height} @ ${rec.fps?.toFixed(2)} fps` : "—"],

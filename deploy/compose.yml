@@ -1,8 +1,15 @@
 # The whole stack, from published images. Runs as a custom app on TrueNAS SCALE
 # or on any Docker host; dev/compose.yml builds the same stack from source.
-# Required: FOOTAGE_DIR, the recordings folder, mounted read-only.
-# Optional: FOOTAGE_DATA_DIR and FOOTAGE_DB_DIR put proxies and the database on
-# their own datasets instead of named volumes.
+#
+# Recordings come from two places:
+# - FOOTAGE_DIR, a folder something else records to (a NAS share), indexed in
+#   place and mounted read-only. Optional.
+# - The library, where uploads go: FOOTAGE_LIBRARY_DIR, or a named volume.
+# FOOTAGE_DATA_DIR and FOOTAGE_DB_DIR put proxies and the database on their own
+# datasets. The core and worker run as uid 1000, which needs read access to the
+# recordings and write access to the library and data folders.
+# More watched folders: mount each in both core and worker at the same path and
+# list them in FOOTAGE_WATCH, e.g. footage=file:///footage;cams=file:///cams.
 name: matick-footage
 
 x-database: &database
@@ -32,14 +39,18 @@ services:
         condition: service_healthy
     environment:
       <<: *database
+      FOOTAGE_WATCH: ${FOOTAGE_WATCH:-footage=file:///footage}
       FOOTAGE_SCAN_INTERVAL: ${FOOTAGE_SCAN_INTERVAL:-30s}
       FOOTAGE_STABLE_FOR: ${FOOTAGE_STABLE_FOR:-1m}
       FOOTAGE_TRANSCRIBE_MODEL: ${FOOTAGE_TRANSCRIBE_MODEL:-small}
-      # name=prefix pairs, ;-separated: where editing machines see the footage.
+      FOOTAGE_UPLOAD_MAX: ${FOOTAGE_UPLOAD_MAX:-50G}
+      # Where editing machines see each source, per target:
+      # Resolve=footage:/Volumes/footage|library:/Volumes/library;Premiere=footage:\\nas\footage
       FOOTAGE_EXPORT_TARGETS: ${FOOTAGE_EXPORT_TARGETS:-}
     volumes:
-      - ${FOOTAGE_DIR:?set FOOTAGE_DIR to the recordings folder}:/footage:ro
-      - ${FOOTAGE_DATA_DIR:-data}:/data:ro
+      - ${FOOTAGE_DIR:-footage}:/footage:ro
+      - ${FOOTAGE_LIBRARY_DIR:-library}:/library
+      - ${FOOTAGE_DATA_DIR:-data}:/data
     ports:
       - "${FOOTAGE_PORT:-8420}:8080"
 
@@ -49,16 +60,22 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      core:
+        condition: service_started
     environment:
       <<: *database
+      FOOTAGE_CORE_URL: http://core:8080
       WORKER_STAGES: probe,proxy,transcribe
       FOOTAGE_WHISPER_LANGUAGE: ${FOOTAGE_WHISPER_LANGUAGE:-}
     volumes:
-      - ${FOOTAGE_DIR}:/footage:ro
+      - ${FOOTAGE_DIR:-footage}:/footage:ro
+      - ${FOOTAGE_LIBRARY_DIR:-library}:/library:ro
       - ${FOOTAGE_DATA_DIR:-data}:/data
       - models:/models
 
 volumes:
   db:
+  footage:
+  library:
   data:
   models:

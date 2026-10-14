@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/matick-io/matick-footage/server/internal/queue"
+	"github.com/matick-io/matick-footage/server/internal/storage"
 )
 
 // Stage versions. Bumping one re-runs that stage for every recording.
@@ -43,8 +44,8 @@ func Specs(fileKey, sidecarKey, transcribeModel string) []queue.Spec {
 
 // Worker runs the core's own stages.
 type Worker struct {
-	DB   *pgxpool.Pool
-	Root string
+	DB      *pgxpool.Pool
+	Sources *storage.Set
 }
 
 func (w *Worker) Run(ctx context.Context) {

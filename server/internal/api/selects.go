@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"github.com/matick-io/matick-footage/server/internal/config"
 	"github.com/matick-io/matick-footage/server/internal/otio"
 )
 
@@ -296,15 +297,14 @@ func (s *Server) exportSelect(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "format must be otio")
 		return
 	}
-	prefix := ""
+	var target *config.ExportTarget
 	if name := r.URL.Query().Get("target"); name != "" {
-		found := false
-		for _, t := range s.Cfg.ExportTargets {
+		for i, t := range s.Cfg.ExportTargets {
 			if t.Name == name {
-				prefix, found = t.Prefix, true
+				target = &s.Cfg.ExportTargets[i]
 			}
 		}
-		if !found {
+		if target == nil {
 			fail(w, http.StatusBadRequest, "unknown export target "+name)
 			return
 		}
@@ -315,7 +315,7 @@ func (s *Server) exportSelect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := s.DB.Query(r.Context(), `
-		SELECT r.path, coalesce(r.fps, 0), coalesce(r.duration, 0), i.t_in, i.t_out, i.comment
+		SELECT r.source, r.path, coalesce(r.fps, 0), coalesce(r.duration, 0), i.t_in, i.t_out, i.comment
 		FROM select_items i JOIN recordings r ON r.id = i.recording_id
 		WHERE i.select_id = $1 ORDER BY i.position, i.id`, id)
 	if err != nil {
@@ -324,11 +324,11 @@ func (s *Server) exportSelect(w http.ResponseWriter, r *http.Request) {
 	}
 	clips, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (otio.Clip, error) {
 		var (
-			c   otio.Clip
-			rel string
+			c           otio.Clip
+			source, rel string
 		)
-		err := row.Scan(&rel, &c.FPS, &c.Duration, &c.TIn, &c.TOut, &c.Comment)
-		c.Path = otio.MapPath(s.Cfg.Root, rel, prefix)
+		err := row.Scan(&source, &rel, &c.FPS, &c.Duration, &c.TIn, &c.TOut, &c.Comment)
+		c.Path = s.exportPath(target, source, rel)
 		c.Name = fmt.Sprintf("%s @ %s", rel[strings.LastIndex(rel, "/")+1:], clock(c.TIn))
 		return c, err
 	})
@@ -348,6 +348,21 @@ func (s *Server) exportSelect(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.otio"`, file))
 	_, _ = w.Write(data)
+}
+
+// exportPath is where an editing machine finds a recording: under the
+// target's prefix for its source, or else the path the server sees.
+func (s *Server) exportPath(t *config.ExportTarget, source, rel string) string {
+	if t != nil {
+		if prefix, ok := t.Prefixes[source]; ok {
+			return otio.MapPath("", rel, prefix)
+		}
+	}
+	root := ""
+	if src, ok := s.Sources.Get(source); ok {
+		root = src.Root()
+	}
+	return otio.MapPath(root, rel, "")
 }
 
 func clock(sec float64) string {

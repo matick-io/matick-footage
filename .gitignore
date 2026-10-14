@@ -8,5 +8,6 @@ __pycache__/
 
 # Local footage, generated samples and app data
 dev/footage/
+dev/library/
 dev/data/
 .env

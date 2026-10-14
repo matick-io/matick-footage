@@ -54,7 +54,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, stop)
 
     conn = connect(dsn)
-    ctx = Context(conn, Path(os.environ.get("FOOTAGE_ROOT", "/footage")),
+    ctx = Context(conn, os.environ.get("FOOTAGE_CORE_URL", "http://core:8080").rstrip("/"),
                   Path(os.environ.get("FOOTAGE_DATA", "/data")))
     log.info("%s claiming %s", worker, keys)
     try:

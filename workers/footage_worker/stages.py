@@ -8,6 +8,8 @@ import os
 import shutil
 import subprocess
 import tempfile
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
@@ -24,21 +26,28 @@ SPRITE_W, SPRITE_H = 160, 90
 @dataclass
 class Context:
     conn: psycopg.Connection
-    root: Path
+    core: str  # the core's base URL
     data: Path
 
     def recording(self, rid: int) -> dict:
         cur = self.conn.execute(
-            """SELECT path, duration, fps, audio_tracks, session_id FROM recordings WHERE id = %s""",
+            """SELECT duration, fps, audio_tracks, session_id FROM recordings WHERE id = %s""",
             (rid,),
         )
         row = cur.fetchone()
         if row is None:
             raise LookupError(f"recording {rid} is gone")
-        return dict(zip(("path", "duration", "fps", "audio_tracks", "session_id"), row))
+        return {"id": rid, **dict(zip(("duration", "fps", "audio_tracks", "session_id"), row))}
 
-    def source(self, rec: dict) -> Path:
-        return self.root / rec["path"]
+    def original(self, rec: dict) -> str:
+        """Where ffmpeg reads the recording: a path on the mount the core shares
+        with workers, or a signed URL. The core decides, so workers never hold
+        storage credentials."""
+        url = f"{self.core}/api/v1/recordings/{rec['id']}/original"
+        with urllib.request.urlopen(url, timeout=30) as res:
+            original = json.load(res)["url"]
+        parsed = urllib.parse.urlparse(original)
+        return urllib.parse.unquote(parsed.path) if parsed.scheme == "file" else original
 
 
 @dataclass
@@ -67,7 +76,7 @@ def probe(ctx: Context, job: Job) -> dict:
     rec = ctx.recording(job.recording_id)
     info = json.loads(
         run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams",
-             str(ctx.source(rec))])
+             ctx.original(rec)])
     )
     streams = info.get("streams", [])
     video = next((s for s in streams if s.get("codec_type") == "video"), None)
@@ -124,7 +133,7 @@ def proxy(ctx: Context, job: Job) -> dict:
         )
         run([
             "ffmpeg", "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
-            "-i", str(ctx.source(rec)), "-filter_complex", graph,
+            "-i", ctx.original(rec), "-filter_complex", graph,
             "-map", "[pv]", "-map", "0:a:0?",
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
             "-force_key_frames", "expr:gte(t,n_forced*1)",
@@ -143,11 +152,15 @@ def proxy(ctx: Context, job: Job) -> dict:
         "width": SPRITE_W, "height": SPRITE_H, "count": count,
         "sheets": len(list(sheets.glob("sheet_*.jpg"))),
     }
-    ctx.conn.execute(
+    size = out.stat().st_size
+    cur = ctx.conn.execute(
         "UPDATE recordings SET proxy_path = %s, sprite = %s, updated_at = now() WHERE id = %s",
         (f"proxies/{job.recording_id}.mp4", json.dumps(sprite), job.recording_id),
     )
-    return {"proxy_bytes": out.stat().st_size, **sprite}
+    if cur.rowcount == 0:  # deleted while this ran
+        out.unlink(missing_ok=True)
+        shutil.rmtree(sheets, ignore_errors=True)
+    return {"proxy_bytes": size, **sprite}
 
 
 _models: dict[str, object] = {}
@@ -173,12 +186,13 @@ def transcribe(ctx: Context, job: Job) -> dict:
         import numpy as np
 
         model = _whisper(job.model)
+        source = ctx.original(rec)
         for track in range(tracks):
             # Decode with ffmpeg rather than faster-whisper's PyAV path, which
             # breaks across PyAV releases: 16 kHz mono float samples on stdout.
             pcm = subprocess.run(
                 ["ffmpeg", "-hide_banner", "-nostdin", "-loglevel", "error",
-                 "-i", str(ctx.source(rec)), "-map", f"0:a:{track}",
+                 "-i", source, "-map", f"0:a:{track}",
                  "-ac", "1", "-ar", "16000", "-f", "f32le", "-"],
                 capture_output=True, check=True,
             ).stdout

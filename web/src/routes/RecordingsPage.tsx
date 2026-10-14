@@ -73,7 +73,7 @@ export function RecordingsPage() {
             <EmptyState
               icon={<Film className="h-5 w-5" />}
               title="No recordings yet"
-              detail="Put video files (with optional .events.jsonl sidecars) in the footage folder; the scanner picks them up."
+              detail="Drop video files here to upload them, each with its .events.jsonl sidecar if it has one, or record into a watched folder."
             />
           )
         }

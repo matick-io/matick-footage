@@ -31,6 +31,10 @@ export interface Stage {
 
 export interface Recording {
   id: number;
+  /** Where the file lives; path is relative to it. */
+  source: string;
+  /** Library recordings are the app's own: they can be deleted or given a sidecar. */
+  library: boolean;
   path: string;
   name: string;
   size: number;
@@ -146,8 +150,10 @@ export interface Job {
 }
 
 export interface Config {
-  export_targets: { name: string; prefix: string }[];
+  export_targets: { name: string }[];
   transcribe_model: string;
+  /** The largest file an upload may be, in bytes. */
+  upload_max: number;
 }
 
 /** Filters as they appear in the URL and the API query string. */
@@ -182,6 +188,32 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return (res.status === 204 || res.status === 202 ? undefined : await res.json()) as T;
 }
 
+export interface UploadOptions {
+  signal?: AbortSignal;
+  /** Bytes sent so far. */
+  onProgress?: (loaded: number) => void;
+}
+
+/** Sends a file as the request body. XHR rather than fetch, which can't report
+ * upload progress. */
+function put<T>(path: string, body: Blob, { signal, onProgress }: UploadOptions = {}): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", `/api/v1${path}`);
+    xhr.responseType = "json";
+    if (body.type) xhr.setRequestHeader("Content-Type", body.type);
+    if (onProgress) xhr.upload.onprogress = (e) => onProgress(e.loaded);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response as T);
+      else reject(new ApiError(xhr.status, (xhr.response as { error?: string } | null)?.error ?? xhr.statusText));
+    };
+    xhr.onerror = () => reject(new ApiError(0, "the connection to the server failed"));
+    xhr.onabort = () => reject(new DOMException("Upload cancelled", "AbortError"));
+    signal?.addEventListener("abort", () => xhr.abort(), { once: true });
+    xhr.send(body);
+  });
+}
+
 export function searchQuery(p: SearchParams): string {
   const qs = new URLSearchParams();
   if (p.q) qs.set("q", p.q);
@@ -200,6 +232,11 @@ export const api = {
   recording: (id: number) => call<Recording>(`/recordings/${id}`),
   events: (id: number) => call<Event[]>(`/recordings/${id}/events`),
   transcript: (id: number) => call<Line[]>(`/recordings/${id}/transcript`),
+  deleteRecording: (id: number) => call<void>(`/recordings/${id}`, { method: "DELETE" }),
+  uploadRecording: (file: File, opts?: UploadOptions) =>
+    put<Recording>(`/uploads/${encodeURIComponent(file.name)}`, file, opts),
+  uploadSidecar: (id: number, file: File, opts?: UploadOptions) =>
+    put<Recording>(`/recordings/${id}/sidecar`, file, opts),
   reprocess: (id: number, stage: string) =>
     call<void>(`/recordings/${id}/reprocess?stage=${encodeURIComponent(stage)}`, { method: "POST" }),
   jobs: () => call<Job[]>("/jobs"),

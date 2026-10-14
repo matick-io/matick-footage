@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import {
   Outlet,
   createRootRoute,
@@ -11,6 +12,9 @@ import { AppLayout, AppSidebar, AppSidebarItem, useSidebarExpanded } from "@mati
 import type { SearchParams } from "./api";
 import { SearchPage } from "./routes/SearchPage";
 import { RecordingsPage } from "./routes/RecordingsPage";
+import { DropZone } from "./components/upload/DropZone";
+import { UploadButton } from "./components/upload/UploadButton";
+import { useUploads } from "./components/upload/useUploads";
 import { RecordingPage } from "./routes/RecordingPage";
 import { SelectsPage } from "./routes/SelectsPage";
 import { JobsPage } from "./routes/JobsPage";
@@ -37,6 +41,8 @@ function Root() {
   const navigate = useNavigate();
   const expanded = useSidebarExpanded();
   const here = current(pathname);
+  const upload = useUploads();
+  const onFiles = useCallback((files: File[]) => void upload(files), [upload]);
   return (
     <AppLayout
       chrome="sidebar"
@@ -61,8 +67,14 @@ function Root() {
         </AppSidebar>
       }
       titleBar={<span className="text-sm font-medium">{here?.label}</span>}
+      titleBarEnd={<UploadButton onFiles={onFiles} />}
     >
       <Outlet />
+      <DropZone
+        onFiles={onFiles}
+        title="Drop to upload to the library"
+        detail="Videos, each with its .events.jsonl sidecar if it has one."
+      />
     </AppLayout>
   );
 }

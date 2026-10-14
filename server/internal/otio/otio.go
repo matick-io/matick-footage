@@ -117,8 +117,9 @@ func FileURL(p string) string {
 	}
 }
 
-// MapPath rewrites the container's footage root to an export target's prefix.
-// prefix may use Windows separators, which then apply to the rest of the path.
+// MapPath puts a path relative to its source under an export target's prefix,
+// or under the source's root when there's no prefix. prefix may use Windows
+// separators, which then apply to the rest of the path.
 func MapPath(root, rel, prefix string) string {
 	if prefix == "" {
 		return path.Join(root, rel)

@@ -13,6 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"github.com/matick-io/matick-footage/server/internal/config"
 	"github.com/matick-io/matick-footage/server/internal/queue"
 )
 
@@ -48,7 +49,11 @@ type Stage struct {
 }
 
 type Recording struct {
-	ID          int64            `json:"id"`
+	ID int64 `json:"id"`
+	// Source names where the file lives; Path is relative to it.
+	Source string `json:"source"`
+	// Library recordings are the app's own: they can be deleted or given a sidecar.
+	Library     bool             `json:"library"`
 	Path        string           `json:"path"`
 	Name        string           `json:"name"`
 	Size        int64            `json:"size"`
@@ -69,7 +74,7 @@ type Recording struct {
 }
 
 const recordingColumns = `
-	r.id, r.path, r.size, r.recorded_at, r.duration, r.fps, r.width, r.height, r.video_codec,
+	r.id, r.source, r.path, r.size, r.recorded_at, r.duration, r.fps, r.width, r.height, r.video_codec,
 	r.audio_tracks, r.sync_mode, r.sidecar_path IS NOT NULL, r.missing_since IS NOT NULL,
 	r.proxy_path IS NOT NULL, r.sprite,
 	s.id IS NOT NULL, coalesce(s.project, ''), coalesce(s.session_key, ''), coalesce(s.engine, ''),
@@ -83,7 +88,7 @@ func scanRecording(row pgx.Row) (*Recording, error) {
 		hasSession bool
 		sess       Session
 	)
-	err := row.Scan(&rec.ID, &rec.Path, &rec.Size, &rec.RecordedAt, &rec.Duration, &rec.FPS,
+	err := row.Scan(&rec.ID, &rec.Source, &rec.Path, &rec.Size, &rec.RecordedAt, &rec.Duration, &rec.FPS,
 		&rec.Width, &rec.Height, &rec.VideoCodec, &rec.AudioTracks, &rec.SyncMode,
 		&rec.HasSidecar, &rec.Missing, &hasProxy, &sprite,
 		&hasSession, &sess.Project, &sess.SessionID, &sess.Engine, &sess.Build, &sess.Platform, &sess.Tester)
@@ -91,6 +96,7 @@ func scanRecording(row pgx.Row) (*Recording, error) {
 		return nil, err
 	}
 	rec.Name = path.Base(rec.Path)
+	rec.Library = rec.Source == config.LibraryName
 	if hasSession {
 		rec.Session = &sess
 	}

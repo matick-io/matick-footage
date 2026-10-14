@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -24,15 +22,22 @@ type eventsResult struct {
 // events loads a recording's sidecar, replacing whatever an earlier version of
 // the sidecar produced.
 func (w *Worker) events(ctx context.Context, job *queue.Job) (*eventsResult, error) {
-	var sidecarPath *string
-	if err := w.DB.QueryRow(ctx, `SELECT sidecar_path FROM recordings WHERE id = $1`,
-		job.RecordingID).Scan(&sidecarPath); err != nil {
+	var (
+		source      string
+		sidecarPath *string
+	)
+	if err := w.DB.QueryRow(ctx, `SELECT source, sidecar_path FROM recordings WHERE id = $1`,
+		job.RecordingID).Scan(&source, &sidecarPath); err != nil {
 		return nil, err
 	}
 	if sidecarPath == nil {
 		return nil, errors.New("recording has no sidecar")
 	}
-	fh, err := os.Open(filepath.Join(w.Root, *sidecarPath))
+	src, ok := w.Sources.Get(source)
+	if !ok {
+		return nil, fmt.Errorf("source %q is not configured", source)
+	}
+	fh, err := src.Bucket.NewReader(ctx, *sidecarPath, nil)
 	if err != nil {
 		return nil, err
 	}

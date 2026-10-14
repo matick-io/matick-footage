@@ -1,14 +1,15 @@
-# Local development runs the deployed Compose stack, built from this checkout
-# and pointed at synthetic samples in dev/footage.
+# Local development runs the deployed Compose stack, built from this checkout,
+# watching synthetic samples in dev/footage and uploading into dev/library.
 
-COMPOSE := FOOTAGE_VERSION=dev FOOTAGE_DIR=$(CURDIR)/dev/footage \
+COMPOSE := FOOTAGE_VERSION=dev FOOTAGE_DIR=$(CURDIR)/dev/footage FOOTAGE_LIBRARY_DIR=$(CURDIR)/dev/library \
 	FOOTAGE_STABLE_FOR=5s FOOTAGE_SCAN_INTERVAL=5s FOOTAGE_TRANSCRIBE_MODEL=base \
-	FOOTAGE_EXPORT_TARGETS="This machine=$(CURDIR)/dev/footage" \
+	FOOTAGE_EXPORT_TARGETS="This machine=footage:$(CURDIR)/dev/footage|library:$(CURDIR)/dev/library" \
 	docker compose -f deploy/compose.yml -f dev/compose.yml
 
 .PHONY: up down logs ps samples web-dev test
 
 up: ## Build and start the stack on http://localhost:8420
+	mkdir -p dev/library
 	$(COMPOSE) up --build -d
 
 down:

@@ -16,11 +16,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/matick-io/matick-footage/server/internal/config"
+	"github.com/matick-io/matick-footage/server/internal/storage"
 )
 
 type Server struct {
-	DB  *pgxpool.Pool
-	Cfg config.Config
+	DB      *pgxpool.Pool
+	Cfg     config.Config
+	Sources *storage.Set
 }
 
 func (s *Server) Handler() http.Handler {
@@ -33,11 +35,15 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET /api/v1/recordings", s.listRecordings)
 	mux.HandleFunc("GET /api/v1/recordings/{id}", s.getRecording)
+	mux.HandleFunc("DELETE /api/v1/recordings/{id}", s.deleteRecording)
+	mux.HandleFunc("GET /api/v1/recordings/{id}/original", s.recordingOriginal)
+	mux.HandleFunc("PUT /api/v1/recordings/{id}/sidecar", s.uploadSidecar)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/events", s.recordingEvents)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/transcript", s.recordingTranscript)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/proxy", s.recordingProxy)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/sprites/{sheet}", s.recordingSprite)
 	mux.HandleFunc("POST /api/v1/recordings/{id}/reprocess", s.reprocess)
+	mux.HandleFunc("PUT /api/v1/uploads/{name}", s.uploadRecording)
 
 	mux.HandleFunc("GET /api/v1/selects", s.listSelects)
 	mux.HandleFunc("POST /api/v1/selects", s.createSelect)
@@ -66,13 +72,14 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) config(w http.ResponseWriter, _ *http.Request) {
-	targets := s.Cfg.ExportTargets
-	if targets == nil {
-		targets = []config.ExportTarget{}
+	targets := []map[string]string{}
+	for _, t := range s.Cfg.ExportTargets {
+		targets = append(targets, map[string]string{"name": t.Name})
 	}
 	writeJSON(w, map[string]any{
 		"export_targets":   targets,
 		"transcribe_model": s.Cfg.TranscribeModel,
+		"upload_max":       s.Cfg.UploadMax,
 	})
 }
 

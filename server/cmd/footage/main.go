@@ -18,6 +18,7 @@ import (
 	"github.com/matick-io/matick-footage/server/internal/pipeline"
 	"github.com/matick-io/matick-footage/server/internal/scan"
 	"github.com/matick-io/matick-footage/server/internal/sidecar"
+	"github.com/matick-io/matick-footage/server/internal/storage"
 	"github.com/matick-io/matick-footage/server/internal/store"
 )
 
@@ -56,13 +57,19 @@ func serve() error {
 	}
 	defer db.Close()
 
-	scanner := &scan.Scanner{DB: db, Root: cfg.Root, StableFor: cfg.StableFor, TranscribeModel: cfg.TranscribeModel}
+	sources, err := storage.OpenAll(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	defer sources.Close()
+
+	scanner := &scan.Scanner{DB: db, Sources: sources.All, StableFor: cfg.StableFor, TranscribeModel: cfg.TranscribeModel}
 	go scanner.Run(ctx, cfg.ScanInterval)
-	go (&pipeline.Worker{DB: db, Root: cfg.Root}).Run(ctx)
+	go (&pipeline.Worker{DB: db, Sources: sources}).Run(ctx)
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           (&api.Server{DB: db, Cfg: cfg}).Handler(),
+		Handler:           (&api.Server{DB: db, Cfg: cfg, Sources: sources}).Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	go func() {
@@ -71,7 +78,10 @@ func serve() error {
 		defer cancel()
 		_ = srv.Shutdown(shutdown)
 	}()
-	slog.Info("serving", "addr", cfg.Addr, "root", cfg.Root, "data", cfg.Data)
+	for _, src := range sources.All {
+		slog.Info("source", "name", src.Name, "root", src.Root(), "library", src.Library)
+	}
+	slog.Info("serving", "addr", cfg.Addr, "data", cfg.Data)
 	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
