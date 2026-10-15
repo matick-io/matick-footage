@@ -35,6 +35,14 @@ type Select struct {
 	Recordings map[int64]*Recording `json:"recordings,omitempty"`
 }
 
+// selectDetail is one select. Unlike the list, it keeps items and recordings
+// when they're empty: the web app maps over them.
+type selectDetail struct {
+	*Select
+	Items      []SelectItem         `json:"items"`
+	Recordings map[int64]*Recording `json:"recordings"`
+}
+
 const selectColumns = `
 	s.id, s.name, s.owner, s.notes,
 	(SELECT count(*) FROM select_items i WHERE i.select_id = s.id),
@@ -127,7 +135,7 @@ func (s *Server) writeSelect(w http.ResponseWriter, r *http.Request, id int64, s
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	writeJSON(w, sel)
+	writeJSON(w, selectDetail{sel, sel.Items, sel.Recordings})
 }
 
 func (s *Server) updateSelect(w http.ResponseWriter, r *http.Request) {
