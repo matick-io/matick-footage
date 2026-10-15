@@ -27,6 +27,8 @@ export interface Stage {
   model?: string;
   attempts: number;
   error?: string;
+  /** What the transcribe stage detected, e.g. "en". */
+  language?: string;
 }
 
 export interface Recording {
@@ -235,6 +237,8 @@ export const api = {
   recording: (id: number) => call<Recording>(`/recordings/${id}`),
   events: (id: number) => call<Event[]>(`/recordings/${id}/events`),
   transcript: (id: number) => call<Line[]>(`/recordings/${id}/transcript`),
+  /** One audio track's transcript as WebVTT, for a <track> element. */
+  subtitlesUrl: (id: number, track: number) => `/api/v1/recordings/${id}/subtitles/${track}.vtt`,
   deleteRecording: (id: number) => call<void>(`/recordings/${id}`, { method: "DELETE" }),
   uploadRecording: (file: File, opts?: UploadOptions) =>
     put<Recording>(`/uploads/${encodeURIComponent(file.name)}`, file, opts),

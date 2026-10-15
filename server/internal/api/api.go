@@ -42,6 +42,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/v1/recordings/{id}/sidecar", s.uploadSidecar)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/events", s.recordingEvents)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/transcript", s.recordingTranscript)
+	mux.HandleFunc("GET /api/v1/recordings/{id}/subtitles/{file}", s.recordingSubtitles)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/proxy", s.recordingProxy)
 	mux.HandleFunc("GET /api/v1/recordings/{id}/sprites/{sheet}", s.recordingSprite)
 	mux.HandleFunc("POST /api/v1/recordings/{id}/reprocess", s.reprocess)

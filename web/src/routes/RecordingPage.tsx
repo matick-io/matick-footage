@@ -2,7 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog, Badge, Button, Dialog, EmptyState, Kbd, ScrollArea, Tabs, useToast } from "@matick-io/ui";
-import { MediaProvider, MediaStage, MediaVideo, Transport, useMedia, useMediaHotkeys } from "@matick-io/ui-media";
+import {
+  MediaCaptions,
+  MediaProvider,
+  MediaStage,
+  MediaVideo,
+  Transport,
+  useMedia,
+  useMediaHotkeys,
+} from "@matick-io/ui-media";
 import { Timeline, type TimelineTrack } from "@matick-io/ui-timeline";
 import { Flag, ListPlus, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { api, type Event, type Line, type Recording } from "../api";
@@ -133,6 +141,29 @@ function useInitialClip() {
   }, [media, tIn, tOut]);
 }
 
+const languageNames = new Intl.DisplayNames(undefined, { type: "language" });
+
+function languageName(code: string): string {
+  try {
+    return languageNames.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/** A subtitle track per transcribed audio track, served as WebVTT. */
+function subtitles(rec: Recording, lines: Line[]) {
+  const tracks = [...new Set(lines.map((l) => l.track))].sort((a, b) => a - b);
+  const language = rec.stages.transcribe?.language ?? "";
+  const name = language ? languageName(language) : "Speech";
+  return tracks.map((track) => ({
+    track,
+    src: api.subtitlesUrl(rec.id, track),
+    language,
+    label: tracks.length > 1 ? `${name} · track ${track + 1}` : name,
+  }));
+}
+
 function Player({ rec, events, lines }: { rec: Recording; events: Event[]; lines: Line[] }) {
   const media = useMedia();
   useMediaHotkeys();
@@ -222,7 +253,19 @@ function Player({ rec, events, lines }: { rec: Recording; events: Event[]; lines
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
           <MediaStage aspectRatio={(rec.width ?? 16) / (rec.height ?? 9)} className="rounded">
-            <MediaVideo src={rec.proxy_url ?? ""} />
+            <MediaVideo src={rec.proxy_url ?? ""}>
+              {subtitles(rec, lines).map((t, i) => (
+                <track
+                  key={t.track}
+                  kind="subtitles"
+                  src={t.src}
+                  srcLang={t.language || undefined}
+                  label={t.label}
+                  default={i === 0}
+                />
+              ))}
+            </MediaVideo>
+            <MediaCaptions />
           </MediaStage>
           <Timeline
             tracks={tracks}

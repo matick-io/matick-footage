@@ -46,6 +46,8 @@ type Stage struct {
 	Attempts int        `json:"attempts"`
 	Error    string     `json:"error,omitempty"`
 	Finished *time.Time `json:"finished_at,omitempty"`
+	// Language is what the transcribe stage detected, e.g. "en".
+	Language string `json:"language,omitempty"`
 }
 
 type Recording struct {
@@ -148,7 +150,8 @@ func (s *Server) attachStages(ctx context.Context, recs map[int64]*Recording) er
 	}
 	rows, err := s.DB.Query(ctx, `
 		SELECT DISTINCT ON (recording_id, stage)
-		       recording_id, stage, status, version, model, attempts, coalesce(error, ''), finished_at
+		       recording_id, stage, status, version, model, attempts, coalesce(error, ''), finished_at,
+		       coalesce(result->>'language', '')
 		FROM jobs WHERE recording_id = ANY ($1)
 		ORDER BY recording_id, stage, created_at DESC, id DESC`, ids)
 	if err != nil {
@@ -162,7 +165,7 @@ func (s *Server) attachStages(ctx context.Context, recs map[int64]*Recording) er
 			stage Stage
 		)
 		if err := rows.Scan(&id, &name, &stage.Status, &stage.Version, &stage.Model,
-			&stage.Attempts, &stage.Error, &stage.Finished); err != nil {
+			&stage.Attempts, &stage.Error, &stage.Finished, &stage.Language); err != nil {
 			return err
 		}
 		recs[id].Stages[name] = stage

@@ -9,17 +9,17 @@ importers:
   .:
     dependencies:
       '@matick-io/ui':
-        specifier: ^0.1.0
-        version: 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+        specifier: ^0.2.0
+        version: 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       '@matick-io/ui-media':
-        specifier: ^0.1.0
-        version: 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+        specifier: ^0.2.0
+        version: 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       '@matick-io/ui-shell':
-        specifier: ^0.1.0
-        version: 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+        specifier: ^0.2.0
+        version: 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       '@matick-io/ui-timeline':
-        specifier: ^0.1.0
-        version: 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+        specifier: ^0.2.0
+        version: 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       '@tanstack/react-query':
         specifier: ^5.100.14
         version: 5.104.2(react@19.2.8)
@@ -149,32 +149,32 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@matick-io/ui-commands@0.1.0':
-    resolution: {integrity: sha512-TFZSlQYpLHMoIr50azNhXW9oTQTy6TrsQjhSnURgXjKDi9YkmD2wgm/nt9DKq42wXfv7aEiVfvM7STxp3B/33w==}
+  '@matick-io/ui-commands@0.2.0':
+    resolution: {integrity: sha512-AP/4wu5iCCvXu0ohfo+ZruZyPzm5HLAY4dmYDsXmt3RdbSY29bmBQheW7ci4biMf6tE6O7g1ZnXC5cx+M6rjew==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@matick-io/ui-media@0.1.0':
-    resolution: {integrity: sha512-i/fJkZE8Z4qm9fo73HUF9rsW/Sp69zfzFNpBz18gNEQsELb36n3WDfzFgbcmTn3uN572sEpXrzUV3NIaaOkoGw==}
+  '@matick-io/ui-media@0.2.0':
+    resolution: {integrity: sha512-9AcMj0sqLfUr6a18FlyqcgWSPjcaYLk+hUswduZelAftZWDTzFTKpegJKOwhoAReuSrtEQqiNspFfblduGS9Dw==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@matick-io/ui-shell@0.1.0':
-    resolution: {integrity: sha512-AFgtf3WgnaqX7t5pxxJjcVOlfJaPXqCsJiQRi6YKm4/ThzwjnbUIJvi0S5IjwxoQbNwEvt2b85ZTQ2aZoVxrsw==}
+  '@matick-io/ui-shell@0.2.0':
+    resolution: {integrity: sha512-9jMUTlgVh/8UoNgmvzJBaODokZ9P/n2ljNRUFFZ4tOP7/vaEP6vOY6NfsWXq3XWLSrcq4NDZbHXNkRSH1UtY0Q==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@matick-io/ui-timeline@0.1.0':
-    resolution: {integrity: sha512-WzyEpB741jcl+Kr3zQ1qtsj/BX2mHu+CY0ElFjNFQOpSgVT/dd3GPHXKLnDZvkq2xmR7fv8RGL9Zkb5jNB0VJA==}
+  '@matick-io/ui-timeline@0.2.0':
+    resolution: {integrity: sha512-3oqXJdYxwM43gwp6186zODGCOc/yNwLBD9ctoNWG0cBlO4GQ3DP507gJXqbsCO8xOa+P1jQiOfutR53cxRdDlA==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@matick-io/ui@0.1.0':
-    resolution: {integrity: sha512-/irEjhYxEPpakSlNtoXQJVrac9y0VzrR8KglCgQmnbEB2pMC0PbacxvxTnwImXuJkZTjASF2cJbfxCFJyabRsw==}
+  '@matick-io/ui@0.2.0':
+    resolution: {integrity: sha512-2W3z2gwDoLyk4SXvZ8xpwMOTFzwuzSMXPLLcJDBvh+Rtjv0pVKCfBNPF9o1djnHwNEUWsf7xorbJmJy5cDKF1Q==}
     peerDependencies:
       '@tailwindcss/typography': ^0.5.19
       react: ^19.0.0
@@ -1662,9 +1662,9 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@matick-io/ui-commands@0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
+  '@matick-io/ui-commands@0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
     dependencies:
-      '@matick-io/ui': 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+      '@matick-io/ui': 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       lucide-react: 0.563.0(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -1677,10 +1677,10 @@ snapshots:
       - date-fns
       - tailwindcss
 
-  '@matick-io/ui-media@0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
+  '@matick-io/ui-media@0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
     dependencies:
-      '@matick-io/ui': 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
-      '@matick-io/ui-timeline': 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+      '@matick-io/ui': 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+      '@matick-io/ui-timeline': 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       lucide-react: 0.563.0(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -1692,10 +1692,10 @@ snapshots:
       - date-fns
       - tailwindcss
 
-  '@matick-io/ui-shell@0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
+  '@matick-io/ui-shell@0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
     dependencies:
-      '@matick-io/ui': 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
-      '@matick-io/ui-commands': 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+      '@matick-io/ui': 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+      '@matick-io/ui-commands': 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       lucide-react: 0.563.0(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -1707,9 +1707,9 @@ snapshots:
       - date-fns
       - tailwindcss
 
-  '@matick-io/ui-timeline@0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
+  '@matick-io/ui-timeline@0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
     dependencies:
-      '@matick-io/ui': 0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
+      '@matick-io/ui': 0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       lucide-react: 0.563.0(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -1721,7 +1721,7 @@ snapshots:
       - date-fns
       - tailwindcss
 
-  '@matick-io/ui@0.1.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
+  '@matick-io/ui@0.2.0(@tailwindcss/typography@0.5.20(tailwindcss@4.3.3))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)':
     dependencies:
       '@base-ui/react': 1.9.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
