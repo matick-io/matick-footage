@@ -126,11 +126,11 @@ export function SearchPage() {
           results.isPending ? null : (
             <EmptyState
               icon={<SearchIcon className="h-5 w-5" />}
-              title={params.q || chips.length ? "No moments match" : "Nothing indexed yet"}
+              title={params.q || chips.length ? "No moments match" : "No moments yet"}
               detail={
                 params.q || chips.length
                   ? "Try fewer words or remove a filter."
-                  : "Recordings appear here once the scanner finds them and their sidecars are read."
+                  : "Moments are game events from sidecars and transcribed speech. Every recording is on the Recordings page."
               }
             />
           )

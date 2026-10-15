@@ -1,6 +1,9 @@
 package search
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestPrefixQuery(t *testing.T) {
 	for in, want := range map[string]string{
@@ -60,5 +63,26 @@ func TestMergeFoldsOverlappingShortClips(t *testing.T) {
 	top := got[0]
 	if top.RecordingID != 1 || top.TIn != 98 || top.TOut != 106 || len(top.Matches) != 2 {
 		t.Fatalf("top clip should be the event with the transcript folded in: %+v", top)
+	}
+}
+
+func TestNewestFirst(t *testing.T) {
+	older, newer := time.Date(2026, 10, 13, 0, 0, 0, 0, time.UTC), time.Date(2026, 10, 14, 0, 0, 0, 0, time.UTC)
+	clips := []Clip{
+		{RecordingID: 1, TIn: 30, recordedAt: older},
+		{RecordingID: 2, TIn: 50, recordedAt: newer},
+		{RecordingID: 1, TIn: 10, recordedAt: older},
+		{RecordingID: 2, TIn: 5, recordedAt: newer},
+	}
+	newestFirst(clips)
+	var got []float64
+	for _, c := range clips {
+		got = append(got, float64(c.RecordingID)*100+c.TIn)
+	}
+	want := []float64{205, 250, 110, 130}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("order = %v, want %v", got, want)
+		}
 	}
 }

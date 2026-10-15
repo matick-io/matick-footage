@@ -58,6 +58,8 @@ type Clip struct {
 	TOut        float64 `json:"t_out"`
 	Score       float64 `json:"score"`
 	Matches     []Match `json:"matches"`
+
+	recordedAt time.Time
 }
 
 func Run(ctx context.Context, db *pgxpool.Pool, q Query) ([]Clip, error) {
@@ -68,12 +70,31 @@ func Run(ctx context.Context, db *pgxpool.Pool, q Query) ([]Clip, error) {
 	}
 	var lines []Clip
 	// Transcripts carry no kinds, tags or importance, so those filters exclude them.
-	if tsq != "" && len(q.Kinds) == 0 && len(q.Tags) == 0 && q.MinImportance == 0 {
+	if len(q.Kinds) == 0 && len(q.Tags) == 0 && q.MinImportance == 0 {
 		if lines, err = searchTranscripts(ctx, db, q, tsq); err != nil {
 			return nil, fmt.Errorf("transcripts: %w", err)
 		}
 	}
-	return merge(events, lines), nil
+	clips := merge(events, lines)
+	if tsq == "" {
+		newestFirst(clips)
+	}
+	return clips, nil
+}
+
+// newestFirst orders clips for browsing, when there's no text to rank by: the
+// newest recordings first, each from start to end.
+func newestFirst(clips []Clip) {
+	sort.SliceStable(clips, func(i, j int) bool {
+		a, b := clips[i], clips[j]
+		if !a.recordedAt.Equal(b.recordedAt) {
+			return a.recordedAt.After(b.recordedAt)
+		}
+		if a.RecordingID != b.RecordingID {
+			return a.RecordingID > b.RecordingID
+		}
+		return a.TIn < b.TIn
+	})
 }
 
 // prefixQuery makes "ward pha" match "Warden phase": every word is a prefix and
@@ -162,7 +183,7 @@ func searchEvents(ctx context.Context, db *pgxpool.Pool, q Query, tsq string) ([
 	}
 	rows, err := db.Query(ctx, fmt.Sprintf(`
 		SELECT e.recording_id, e.type, e.t + r.sync_offset, e.dur, e.kind, e.label, e.tags,
-		       e.importance, r.duration, %s AS rank
+		       e.importance, r.duration, r.recorded_at, %s AS rank
 		FROM events e
 		JOIN recordings r ON r.id = e.recording_id
 		LEFT JOIN sessions s ON s.id = r.session_id
@@ -180,7 +201,7 @@ func searchEvents(ctx context.Context, db *pgxpool.Pool, q Query, tsq string) ([
 			rank     float32
 		)
 		err := row.Scan(&c.RecordingID, &m.Type, &m.T, &m.Dur, &m.Kind, &m.Label, &m.Tags,
-			&m.Importance, &duration, &rank)
+			&m.Importance, &duration, &c.recordedAt, &rank)
 		c.TIn, c.TOut = eventWindow(m)
 		c.TIn, c.TOut = clamp(c.TIn, c.TOut, duration)
 		c.Matches = []Match{m}
@@ -188,17 +209,24 @@ func searchEvents(ctx context.Context, db *pgxpool.Pool, q Query, tsq string) ([
 	})
 }
 
+// searchTranscripts finds speech matching tsq, or lists the newest speech when
+// tsq is empty.
 func searchTranscripts(ctx context.Context, db *pgxpool.Pool, q Query, tsq string) ([]Clip, error) {
 	f := common(q, "tr.t_in")
-	f.add("tr.search @@ to_tsquery('english', ?)", tsq)
+	order := "r.recorded_at DESC, r.id DESC, tr.t_in"
+	if tsq != "" {
+		f.add("tr.search @@ to_tsquery('english', ?)", tsq)
+		order = fmt.Sprintf("ts_rank(tr.search, to_tsquery('english', $%d)) DESC, r.recorded_at DESC", len(f.args))
+	}
 	rows, err := db.Query(ctx, fmt.Sprintf(`
-		SELECT tr.recording_id, tr.t_in + r.sync_offset, tr.t_out + r.sync_offset, tr.text, r.duration
+		SELECT tr.recording_id, tr.t_in + r.sync_offset, tr.t_out + r.sync_offset, tr.text, r.duration,
+		       r.recorded_at
 		FROM transcripts tr
 		JOIN recordings r ON r.id = tr.recording_id
 		LEFT JOIN sessions s ON s.id = r.session_id
 		WHERE %s
-		ORDER BY ts_rank(tr.search, to_tsquery('english', $%d)) DESC, r.recorded_at DESC
-		LIMIT %d`, f.sql(), len(f.args), limit), f.args...)
+		ORDER BY %s
+		LIMIT %d`, f.sql(), order, limit), f.args...)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +237,7 @@ func searchTranscripts(ctx context.Context, db *pgxpool.Pool, q Query, tsq strin
 			duration *float64
 			m        = Match{Source: "transcript"}
 		)
-		err := row.Scan(&c.RecordingID, &m.T, &tOut, &m.Text, &duration)
+		err := row.Scan(&c.RecordingID, &m.T, &tOut, &m.Text, &duration, &c.recordedAt)
 		d := tOut - m.T
 		m.Dur = &d
 		c.TIn, c.TOut = clamp(m.T-PreRoll, tOut+PreRoll, duration)
